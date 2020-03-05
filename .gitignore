@@ -119,3 +119,9 @@ aux_images/older_version/
 
 
 detections/anno_*/
+*.avi
+
+detections/anno_a_.zip
+detections/anno_b_.zip
+results_anno_a/
+results_anno_b/
