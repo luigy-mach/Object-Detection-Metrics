@@ -139,20 +139,20 @@ def getBoundingBoxes(directory,
                     BBType.GroundTruth,
                     format=bbFormat)
             else:
-                # # idClass = int(splitLine[0]) #class
-                # idClass = (splitLine[0])  # class
-                # confidence = float(splitLine[1])
-                # x = float(splitLine[2])
-                # y = float(splitLine[3])
-                # w = float(splitLine[4])
-                # h = float(splitLine[5])
+                # idClass = int(splitLine[0]) #class
+                idClass = (splitLine[0])  # class
+                confidence = float(splitLine[1])
+                x = float(splitLine[2])
+                y = float(splitLine[3])
+                w = float(splitLine[4])
+                h = float(splitLine[5])
 
-                idClass = ( splitLine[0])  # class
-                confidence = float(0.0)
-                x = float(splitLine[1])
-                y = float(splitLine[2])
-                w = float(splitLine[3])
-                h = float(splitLine[4])
+                # idClass = ( splitLine[0])  # class
+                # confidence = float(0.0)
+                # x = float(splitLine[1])
+                # y = float(splitLine[2])
+                # w = float(splitLine[3])
+                # h = float(splitLine[4])
 
                 bb = BoundingBox(
                     nameOfImage,
@@ -254,6 +254,8 @@ parser.add_argument(
     dest='showPlot',
     action='store_false',
     help='no plot is shown during execution')
+
+
 args = parser.parse_args()
 
 iouThreshold = args.iouThreshold
