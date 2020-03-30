@@ -302,12 +302,6 @@ if len(errors) is not 0:
     [print(e) for e in errors]
     sys.exit()
 
-
-
-
-
-
-
 # Create directory to save results
 shutil.rmtree(savePath, ignore_errors=True)  # Clear folder
 os.makedirs(savePath)
@@ -330,7 +324,6 @@ allBoundingBoxes, allClasses = getBoundingBoxes(
 # Get detected boxes
 allBoundingBoxes, allClasses = getBoundingBoxes(
     detFolder, False, detFormat, detCoordType, allBoundingBoxes, allClasses, imgSize=imgSize)
-
 allClasses.sort()
 
 evaluator = Evaluator()
@@ -351,7 +344,6 @@ f = open(os.path.join(savePath, 'results.txt'), 'w')
 f.write('Object Detection Metrics\n')
 f.write('https://github.com/rafaelpadilla/Object-Detection-Metrics\n\n\n')
 f.write('Average Precision (AP), Precision and Recall per class:')
-
 
 # each detection is a class
 for metricsPerClass in detections:
@@ -381,6 +373,4 @@ for metricsPerClass in detections:
 mAP = acc_AP / validClasses
 mAP_str = "{0:.2f}%".format(mAP * 100)
 print('mAP: %s' % mAP_str)
-print("tamano: %s" % len(detections))
 f.write('\n\n\nmAP: %s' % mAP_str)
-f.close()
