@@ -62,7 +62,8 @@ class Evaluator:
             if bb.getBBType() == BBType.GroundTruth:
                 groundTruths.append([
                     bb.getImageName(),
-                    bb.getClassId(), 1,
+                    bb.getClassId(), 
+                    1,
                     bb.getAbsoluteBoundingBox(BBFormat.XYX2Y2)
                 ])
             else:
@@ -76,6 +77,11 @@ class Evaluator:
             if bb.getClassId() not in classes:
                 classes.append(bb.getClassId())
         classes = sorted(classes)
+
+        # print("length of GT : %s"%len(groundTruths))
+        # print("length of DET: %s"%len(detections))
+
+
         # Precision x Recall is obtained individually by each class
         # Loop through by classes
         for c in classes:
@@ -128,9 +134,24 @@ class Evaluator:
             # Depending on the method, call the right implementation
             if method == MethodAveragePrecision.EveryPointInterpolation:
                 [ap, mpre, mrec, ii] = Evaluator.CalculateAveragePrecision(rec, prec)
+                # print("Evaluator.CalculateAveragePrecision")   
             else:
                 [ap, mpre, mrec, _] = Evaluator.ElevenPointInterpolatedAP(rec, prec)
+                # print("Evaluator.ElevenPointInterpolatedAP")
             # add class result in the dictionary to be returned
+
+            total_tp = np.sum(TP)
+            total_fp = np.sum(FP)
+
+            myPrecision = total_tp/(total_tp+total_fp)
+            myRecall = total_tp/npos
+            # F1_score = 2 × (precision × recall)/(precision + recall)
+            myF1score = 2*(myPrecision*myRecall)/(myPrecision+myRecall) 
+            
+            # print("     myPrecision %s"%myPrecision)
+            # print("     myRecall %s"%myRecall)
+            # print("     myF1score %s"%myF1score)
+
             r = {
                 'class': c,
                 'precision': prec,
@@ -140,10 +161,20 @@ class Evaluator:
                 'interpolated recall': mrec,
                 'total positives': npos,
                 'total TP': np.sum(TP),
-                'total FP': np.sum(FP)
+                'total FP': np.sum(FP),
+                'myPrecision' : myPrecision,
+                'myRecall' : myRecall,
+                'myF1score' :myF1score
+
             }
             ret.append(r)
+
         return ret
+
+
+
+
+
 
     def PlotPrecisionRecallCurve(self,
                                  boundingBoxes,
@@ -201,7 +232,7 @@ class Evaluator:
             total_tp = result['total TP']
             total_fp = result['total FP']
 
-            plt.close()
+            # plt.close()
             if showInterpolatedPrecision:
                 if method == MethodAveragePrecision.EveryPointInterpolation:
                     plt.plot(mrec, mpre, '--r', label='Interpolated precision (every point)')
@@ -287,6 +318,78 @@ class Evaluator:
                 # plt.waitforbuttonpress()
                 plt.pause(0.05)
         return results
+
+
+    def getPrecRecallF1score(self, results):
+        # list containing metrics (precision, recall, average precision) of each class
+        # List with all ground truths (Ex: [imageName,class,confidence=1, (bb coordinates XYX2Y2)])
+        '''
+            'class': c,
+            'precision': prec,
+            'recall': rec,
+            'AP': ap,
+            'interpolated precision': mpre,
+            'interpolated recall': mrec,
+            'total positives': npos,
+            'total TP': np.sum(TP),
+            'total FP': np.sum(FP),
+            
+            'myprecision' : myprecision,
+            'myrecall' : myrecall,
+            'myf1score' :myf1score
+        '''
+        #                 groundtruth
+        #                  pos    neg
+        # Predic      pos  | TP  | FP |
+        #             neg  | FN  | TN |
+
+
+        #                 groundtruth
+        #                  pos    neg
+        # Predic      pos  | TP  | FP |
+        #             neg  |*nGT*| TN |
+
+            
+        # total_TP=0 , total_FP=0
+        # total_FN=0 , total_TN=0
+        
+
+
+        result = None
+        # Each resut represents a class
+        # print("tam results: %s" % len(results))
+
+        myPrecision=-1
+        myRecall=-1
+        myF1score=-1
+
+        for result in results:
+            if result is None:
+                raise IOError('Error: Class %d could not be found.' % classId)
+
+            classId = result['class']
+            precision = result['precision']
+            recall = result['recall']
+            average_precision = result['AP']
+            mpre = result['interpolated precision']
+            mrec = result['interpolated recall']
+            npos = result['total positives']
+            total_tp = result['total TP']
+            # 'myPrecision' : myPrecision,
+            # 'myRecall' : myRecall,
+            # 'myF1score' :myF1score
+            myPrecision = result['myPrecision']
+            myRecall = result['myRecall']
+            myF1score = result['myF1score']
+
+
+        return myPrecision, myRecall, myF1score
+
+
+
+
+
+
 
     @staticmethod
     def CalculateAveragePrecision(rec, prec):

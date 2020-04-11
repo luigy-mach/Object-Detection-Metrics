@@ -75,3 +75,8 @@ class BoundingBoxes:
     #     for det in self.getBoundingBoxesByType(BBType.Detected):
     #         image = add_bb_into_image(image, det ,color=(255,0,0))
     #     return image
+
+
+    def get_lengthBoundingBoxes(self):
+        return len(self._boundingBoxes)
+        # return 11
