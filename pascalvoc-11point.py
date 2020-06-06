@@ -146,14 +146,6 @@ def getBoundingBoxes(directory,
                 y = float(splitLine[3])
                 w = float(splitLine[4])
                 h = float(splitLine[5])
-
-                # idClass = ( splitLine[0])  # class
-                # confidence = float(0.0)
-                # x = float(splitLine[1])
-                # y = float(splitLine[2])
-                # w = float(splitLine[3])
-                # h = float(splitLine[4])
-
                 bb = BoundingBox(
                     nameOfImage,
                     idClass,
@@ -169,7 +161,6 @@ def getBoundingBoxes(directory,
             allBoundingBoxes.addBoundingBox(bb)
             if idClass not in allClasses:
                 allClasses.append(idClass)
-                # print("test:  %s" % idClass )
         fh1.close()
     return allBoundingBoxes, allClasses
 
@@ -255,8 +246,6 @@ parser.add_argument(
     dest='showPlot',
     action='store_false',
     help='no plot is shown during execution')
-
-
 args = parser.parse_args()
 
 iouThreshold = args.iouThreshold
@@ -293,21 +282,15 @@ else:
 if args.savePath is not None:
     savePath = ValidatePaths(args.savePath, '-sp/--savepath', errors)
 else:
-    savePath = os.path.join(currentPath, 'results')
+    savePath = os.path.join(currentPath, 'results-11point-{}'.format(iouThreshold))
 # Validate savePath
 # If error, show error messages
-if len(errors) is not 0:
+if len(errors) != 0:
     print("""usage: Object Detection Metrics [-h] [-v] [-gt] [-det] [-t] [-gtformat]
                                 [-detformat] [-save]""")
     print('Object Detection Metrics: error(s): ')
     [print(e) for e in errors]
     sys.exit()
-
-
-
-
-
-
 
 # Create directory to save results
 shutil.rmtree(savePath, ignore_errors=True)  # Clear folder
@@ -328,45 +311,34 @@ showPlot = args.showPlot
 # Get groundtruth boxes
 allBoundingBoxes, allClasses = getBoundingBoxes(
     gtFolder, True, gtFormat, gtCoordType, imgSize=imgSize)
+
+
 # Get detected boxes
 allBoundingBoxes, allClasses = getBoundingBoxes(
     detFolder, False, detFormat, detCoordType, allBoundingBoxes, allClasses, imgSize=imgSize)
-
 allClasses.sort()
-
-
-# print("len allBoundingBoxes:  %s"%type(allBoundingBoxes))
-# print("len allClasses:  %s"%type(allClasses))
-# print("len allBoundingBoxes:  %s"%allBoundingBoxes.get_lengthBoundingBoxes())
-# print("len allClasses:  %s"%len(allClasses))
-
 
 evaluator = Evaluator()
 acc_AP = 0
 validClasses = 0
 
+
+
+
 # Plot Precision x Recall curve
 detections = evaluator.PlotPrecisionRecallCurve(
     allBoundingBoxes,  # Object containing all bounding boxes (ground truths and detections)
     IOUThreshold=iouThreshold,  # IOU threshold
-    method=MethodAveragePrecision.EveryPointInterpolation,
-    # method=MethodAveragePrecision.ElevenPointInterpolation, #mytest
-    showAP=False,  # Show Average Precision in the title of the plot
-    showInterpolatedPrecision=False,  # Don't plot the interpolated precision curve
+    method=MethodAveragePrecision.ElevenPointInterpolation,
+    showAP=True,  # Show Average Precision in the title of the plot
+    showInterpolatedPrecision=True,  # Don't plot the interpolated precision curve
     savePath=savePath,
     showGraphic=showPlot)
 
 f = open(os.path.join(savePath, 'results.txt'), 'w')
-# f.write('Object Detection Metrics\n')
+f.write('Object Detection Metrics\n')
 # f.write('https://github.com/rafaelpadilla/Object-Detection-Metrics\n\n\n')
-# f.write('Average Precision (AP), Precision and Recall per class:')
-
-
-myPrecision, myRecall, myF1score = evaluator.getPrecRecallF1score(detections)
-
-# print("**     myPrecision : %s"% myPrecision) 
-# print("**     myRecall : %s"% myRecall)
-# print("**     myF1score : %s"% myF1score)
+f.write('Average Precision (AP), Precision and Recall per class:')
 
 # each detection is a class
 for metricsPerClass in detections:
@@ -380,10 +352,6 @@ for metricsPerClass in detections:
     total_TP = metricsPerClass['total TP']
     total_FP = metricsPerClass['total FP']
 
-    myPrecision = metricsPerClass['myPrecision']
-    myRecall = metricsPerClass['myRecall']
-    myF1score = metricsPerClass['myF1score']
-
     if totalPositives > 0:
         validClasses = validClasses + 1
         acc_AP = acc_AP + ap
@@ -391,30 +359,13 @@ for metricsPerClass in detections:
         rec = ['%.2f' % r for r in recall]
         ap_str = "{0:.2f}%".format(ap * 100)
         # ap_str = "{0:.4f}%".format(ap * 100)
-        # print('AP: %s (%s)' % (ap_str, cl))
+        print('AP: %s (%s)' % (ap_str, cl))
         f.write('\n\nClass: %s' % cl)
         f.write('\nAP: %s' % ap_str)
-        # f.write('\nPrecision: %s' % prec)
-        # f.write('\nRecall: %s' % rec)
-        
-        # f.write('\nmyPrecision: %s' % myPrecision)
-        # f.write('\nmyRecall: %s' % myRecall)
-        # f.write('\nmyF1score: %s' % myF1score)
-
-        f.write('\nmyPrecision    myRecall    myF1score')
-        # temp_str = "\n      {}      {}      {}".format(myPrecision, myRecall, myF1score) 
-        temp_str = "{:.3f}         {:.3f}          {:.3f}".format(myPrecision, myRecall, myF1score) 
-        f.write("\n%s"%temp_str)
-        
-        print('myPrecision    myRecall    myF1score')
-        print(temp_str)
-
-
+        f.write('\nPrecision: %s' % prec)
+        f.write('\nRecall: %s' % rec)
 
 mAP = acc_AP / validClasses
 mAP_str = "{0:.2f}%".format(mAP * 100)
-# mAP_str = "{0:.2f}%".format(mAP)
 print('mAP: %s' % mAP_str)
-# f.write('\n\n\nmAP: %s' % mAP_str)
-f.write('\nmAP: %s' % mAP_str)
-f.close()
+f.write('\n\n\nmAP: %s' % mAP_str)
